@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Circuit: Informatika Challenge</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .circuit-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+            height: 2px;
+            animation: flow 3s linear infinite;
+            opacity: 0.3;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: translateX(100vw); opacity: 0; }
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00d4ff;
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+            box-shadow: 0 0 10px #00d4ff;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            width: 100%;
+        }
+        
+        .title-screen {
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 10vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(45deg, #00d4ff, #7b2cbf, #ff006e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.8)); }
+            to { filter: drop-shadow(0 0 40px rgba(123, 44, 191, 0.8)); }
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .start-btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+            max-width: 300px;
+            -webkit-appearance: none;
+            appearance: none;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .start-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 15px 50px rgba(0, 212, 255, 0.6);
+        }
+        
+        .game-area {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: flex-start;
+            padding-top: 10px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 10px;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+        }
+        
+        .score-display, .lives-display, .level-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+        }
+        
+        .score-display span, .lives-display span, .level-display span {
+            color: #00d4ff;
+            font-weight: 700;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #00d4ff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), inset 0 0 30px rgba(0, 212, 255, 0.1);
+            background: rgba(0, 0, 0, 0.8);
+            max-width: 100%;
+            max-height: calc(100vh - 250px);
+            touch-action: none;
+        }
+        
+        .mobile-controls {
+            display: none;
+            width: 100%;
+            max-width: 280px;
+            margin-top: 10px;
+            position: relative;
+            height: 160px;
+        }
+        
+        .d-pad {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .d-btn {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.1s;
+        }
+        
+        .d-btn:active, .d-btn.active {
+            background: rgba(0, 212, 255, 0.5);
+            transform: scale(0.95);
+        }
+        
+        .d-btn.up { top: 0; left: 50%; transform: translateX(-50%); }
+        .d-btn.down { bottom: 0; left: 50%; transform: translateX(-50%); }
+        .d-btn.left { top: 50%; left: 0; transform: translateY(-50%); }
+        .d-btn.right { top: 50%; right: 0; transform: translateY(-50%); }
+        
+        .d-btn.up:active, .d-btn.up.active { transform: translateX(-50%) scale(0.95); }
+        .d-btn.down:active, .d-btn.down.active { transform: translateX(-50%) scale(0.95); }
+        .d-btn.left:active, .d-btn.left.active { transform: translateY(-50%) scale(0.95); }
+        .d-btn.right:active, .d-btn.right.active { transform: translateY(-50%) scale(0.95); }
+        
+        .controls-hint {
+            margin-top: 10px;
+            color: #888;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        
+        .controls-hint span {
+            color: #00d4ff;
+            font-weight: 700;
+        }
+        
+        .quiz-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .quiz-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 20px;
+            padding: 25px 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.4);
+            animation: slideIn 0.5s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #ff006e;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .quiz-header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .question {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+            line-height: 1.5;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        @media (min-width: 400px) {
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .option-btn {
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            min-height: 50px;
+            display: block;
+            width: 100%;
+        }
+        
+        .option-btn:active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+        
+        .option-btn.correct {
+            background: rgba(0, 255, 100, 0.3);
+            border-color: #00ff64;
+        }
+        
+        .option-btn.wrong {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+        }
+        
+        .quiz-result {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            display: none;
+        }
+        
+        .continue-btn {
+            margin-top: 15px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .game-over {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+            padding: 20px;
+        }
+        
+        .game-over h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: #ff006e;
+            margin-bottom: 15px;
+        }
+        
+        .final-score {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+        }
+        
+        .final-score span {
+            color: #00d4ff;
+            font-weight: 700;
+        }
+        
+        .restart-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ff006e, #7b2cbf);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 250px;
+            -webkit-appearance: none;
+            appearance: none;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .restart-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 10px 40px rgba(255, 0, 110, 0.4);
+        }
+        
+        .instructions {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            max-width: 100%;
+            text-align: center;
+        }
+        
+        .instructions h3 {
+            color: #00d4ff;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .instructions p {
+            color: #aaa;
+            line-height: 1.5;
+            font-size: 0.85rem;
+        }
+        
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-controls {
+                display: block;
+            }
+            .controls-hint {
+                display: none;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .game-title {
+                font-size: 1.8rem;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+                margin-bottom: 15px;
+            }
+            .instructions {
+                margin-top: 15px;
+                padding: 10px;
+            }
+            .mobile-controls {
+                height: 140px;
+            }
+            .d-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-height: 600px) {
+            .mobile-controls {
+                height: 110px;
+            }
+            .d-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation" id="bgAnimation"></div>
+    
+    <div class="container">
+        <!-- Title Screen -->
+        <div class="title-screen" id="titleScreen">
+            <h1 class="game-title">⚡ NEON CIRCUIT ⚡</h1>
+            <p class="subtitle">Informatika Challenge</p>
+            <button class="start-btn" id="startBtn">MULAI GAME</button>
+            
+            <div class="instructions">
+                <h3>📖 Cara Bermain</h3>
+                <p>
+                    Kendalikan <strong>Packet Data</strong> untuk mengumpulkan <strong>Data Bits</strong>.<br>
+                    Hindari <strong>Firewall Merah</strong> dan <strong>Virus Ungu</strong>!<br>
+                    Kalah? Jawab soal Informatika untuk hidup kembali!<br><br>
+                    <span style="color: #00d4ff;">HP:</span> Gunakan D-Pad di layar<br>
+                    <span style="color: #00d4ff;">PC:</span> Arrow Keys / WASD
+                </p>
+            </div>
+        </div>
+        
+        <!-- Game Area -->
+        <div class="game-area" id="gameArea">
+            <div class="game-info">
+                <div class="score-display">SCORE: <span id="score">0</span></div>
+                <div class="level-display">LEVEL: <span id="level">1</span></div>
+                <div class="lives-display">LIVES: <span id="lives">3</span></div>
+            </div>
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+            
+            <!-- Mobile Controls -->
+            <div class="mobile-controls" id="mobileControls">
+                <div class="d-pad">
+                    <div class="d-btn up" data-dir="up" id="btnUp">▲</div>
+                    <div class="d-btn down" data-dir="down" id="btnDown">▼</div>
+                    <div class="d-btn left" data-dir="left" id="btnLeft">◀</div>
+                    <div class="d-btn right" data-dir="right" id="btnRight">▶</div>
+                </div>
+            </div>
+            
+            <p class="controls-hint">
+                Gunakan <span>ARROW KEYS</span> atau <span>WASD</span> untuk bergerak
+            </p>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div class="game-over" id="gameOver">
+            <h2>GAME OVER</h2>
+            <p class="final-score">Final Score: <span id="finalScore">0</span></p>
+            <button class="restart-btn" id="restartBtn">MAIN LAGI</button>
+        </div>
+    </div>
+    
+    <!-- Quiz Modal -->
+    <div class="quiz-modal" id="quizModal">
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <h2>⚠️ SYSTEM BREACH</h2>
+                <p>Jawab soal Informatika untuk memperbaiki sistem!</p>
+            </div>
+            <div class="question" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="quiz-result" id="quizResult"></div>
+            <button class="continue-btn" id="continueBtn">LANJUTKAN</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Responsive canvas sizing
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 30, 600);
+            const maxHeight = window.innerHeight - 280;
+            
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = Math.min(maxHeight, maxWidth * 0.67) + 'px';
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let animationId;
+        
+        // Player (Packet Data)
+        const player = {
+            x: 300,
+            y: 200,
+            size: 18,
+            speed: 4,
+            dx: 0,
+            dy: 0,
+            trail: []
+        };
+        
+        // Game Objects
+        let dataBits = [];
+        let firewalls = [];
+        let viruses = [];
+        let particles = [];
+        
+        // Questions Database - Informatika Kelas 10 (Perangkat Jaringan)
+        const questions = [
+            {
+                question: "Perangkat jaringan yang berfungsi menghubungkan dua jaringan dengan arsitektur berbeda adalah?",
+                options: ["Hub", "Switch", "Router", "Gateway"],
+                correct: 3
+            },
+            {
+                question: "Perangkat yang bekerja pada Layer 1 (Physical Layer) OSI adalah?",
+                options: ["Switch", "Hub", "Router", "Bridge"],
+                correct: 1
+            },
+            {
+                question: "Perangkat yang menggunakan MAC address untuk meneruskan data adalah?",
+                options: ["Hub", "Repeater", "Switch", "Modem"],
+                correct: 2
+            },
+            {
+                question: "Perangkat yang memperkuat sinyal jaringan untuk jarak jauh disebut?",
+                options: ["Bridge", "Repeater", "Gateway", "Access Point"],
+                correct: 1
+            },
+            {
+                question: "Router bekerja pada layer berapa dalam model OSI?",
+                options: ["Layer 1", "Layer 2", "Layer 3", "Layer 4"],
+                correct: 2
+            },
+            {
+                question: "Perangkat yang menghubungkan LAN dengan internet menggunakan telepon adalah?",
+                options: ["Switch", "Router", "Modem", "NIC"],
+                correct: 2
+            },
+            {
+                question: "NIC (Network Interface Card) berfungsi sebagai?",
+                options: ["Penghubung komputer dengan jaringan", "Penguat sinyal", "Pengaman jaringan", "Server utama"],
+                correct: 0
+            },
+            {
+                question: "Access Point (AP) digunakan untuk?",
+                options: ["Koneksi kabel", "Koneksi wireless/WiFi", "Pengamanan firewall", "Routing data"],
+                correct: 1
+            },
+            {
+                question: "Perangkat yang memfilter lalu lintas berdasarkan IP address adalah?",
+                options: ["Hub", "Switch", "Firewall", "Bridge"],
+                correct: 2
+            },
+            {
+                question: "Bridge digunakan untuk?",
+                options: ["Menghubungkan dua segmen jaringan yang sama", "Routing antar jaringan", "Koneksi internet", "Wireless access"],
+                correct: 0
+            },
+            {
+                question: "Layer OSI tempat Switch bekerja adalah?",
+                options: ["Physical Layer", "Data Link Layer", "Network Layer", "Transport Layer"],
+                correct: 1
+            },
+            {
+                question: "Perangkat yang mengubah sinyal digital ke analog adalah?",
+                options: ["Router", "Switch", "Modem", "Hub"],
+                correct: 2
+            },
+            {
+                question: "MAC address terdiri dari berapa bit?",
+                options: ["32 bit", "48 bit", "64 bit", "128 bit"],
+                correct: 1
+            },
+            {
+                question: "Perangkat yang membagi koneksi internet dengan NAT adalah?",
+                options: ["Hub", "Switch", "Router", "Repeater"],
+                correct: 2
+            },
+            {
+                question: "Kabel UTP straight-through menggunakan standar?",
+                options: ["T568A - T568A", "T568B - T568B", "T568A - T568B", "Crossover"],
+                correct: 1
+            }
+        ];
+        
+        // Initialize Background Animation
+        function initBackground() {
+            const bg = document.getElementById('bgAnimation');
+            for (let i = 0; i < 5; i++) {
+                const line = document.createElement('div');
+                line.className = 'circuit-line';
+                line.style.top = Math.random() * 100 + '%';
+                line.style.width = Math.random() * 200 + 100 + 'px';
+                line.style.animationDelay = Math.random() * 3 + 's';
+                bg.appendChild(line);
+            }
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                bg.appendChild(particle);
+            }
+        }
+        
+        // Mobile Input State
+        const mobileInput = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
+        
+        // Setup Button Event Listeners - SIMPLIFIED VERSION
+        function setupButtonListeners() {
+            // Start Button
+            const startBtn = document.getElementById('startBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const continueBtn = document.getElementById('continueBtn');
+            
+            // Simple touch/click handler
+            function addHandler(element, callback) {
+                if (!element) return;
+                
+                // Use pointerdown for modern browsers (works for both touch and mouse)
+                element.addEventListener('pointerdown', function(e) {
+                    e.preventDefault();
+                    callback();
+                });
+                
+                // Fallback for older browsers
+                element.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    callback();
+                }, {passive: false});
+                
+                element.addEventListener('mousedown', function(e) {
+                    callback();
+                });
+                
+                // Also handle regular click as ultimate fallback
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    callback();
+                });
+            }
+            
+            addHandler(startBtn, startGame);
+            addHandler(restartBtn, restartGame);
+            addHandler(continueBtn, continueGame);
+            
+            // D-Pad Buttons
+            const dButtons = document.querySelectorAll('.d-btn');
+            dButtons.forEach(btn => {
+                const dir = btn.dataset.dir;
+                
+                // Pointer events (modern)
+                btn.addEventListener('pointerdown', function(e) {
+                    e.preventDefault();
+                    mobileInput[dir] = true;
+                    btn.classList.add('active');
+                });
+                
+                btn.addEventListener('pointerup', function(e) {
+                    e.preventDefault();
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                });
+                
+                btn.addEventListener('pointercancel', function(e) {
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                });
+                
+                // Touch events (fallback)
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    mobileInput[dir] = true;
+                    btn.classList.add('active');
+                }, {passive: false});
+                
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                }, {passive: false});
+                
+                btn.addEventListener('touchcancel', function(e) {
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                });
+                
+                // Mouse events (desktop)
+                btn.addEventListener('mousedown', function(e) {
+                    mobileInput[dir] = true;
+                    btn.classList.add('active');
+                });
+                
+                btn.addEventListener('mouseup', function(e) {
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                });
+                
+                btn.addEventListener('mouseleave', function(e) {
+                    mobileInput[dir] = false;
+                    btn.classList.remove('active');
+                });
+            });
+        }
+        
+        // Start Game
+        function startGame() {
+            document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'flex';
+            document.getElementById('gameOver').style.display = 'none';
+            
+            resizeCanvas();
+            score = 0;
+            lives = 3;
+            level = 1;
+            resetPlayer();
+            initLevel();
+            gameRunning = true;
+            updateUI();
+            gameLoop();
+        }
+        
+        function resetPlayer() {
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.dx = 0;
+            player.dy = 0;
+            player.trail = [];
+        }
+        
+        function initLevel() {
+            dataBits = [];
+            firewalls = [];
+            viruses = [];
+            
+            // Spawn Data Bits
+            for (let i = 0; i < 4 + level; i++) {
+                spawnDataBit();
+            }
+            
+            // Spawn Firewalls
+            for (let i = 0; i < 2 + Math.floor(level / 2); i++) {
+                firewalls.push({
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: Math.random() * (canvas.height - 60) + 30,
+                    size: 28,
+                    dx: (Math.random() - 0.5) * (1.5 + level * 0.3),
+                    dy: (Math.random() - 0.5) * (1.5 + level * 0.3)
+                });
+            }
+            
+            // Spawn Viruses - SPEED DIKURANGI SEDIKIT SAJA
+            if (level >= 2) {
+                for (let i = 0; i < Math.floor(level / 2); i++) {
+                    viruses.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        size: 22,
+                        speed: 1.0 + level * 0.15  // DIUBAH: dari 1.2 + level * 0.2 menjadi 1.0 + level * 0.15
+                    });
+                }
+            }
+        }
+        
+        function spawnDataBit() {
+            dataBits.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: Math.random() * (canvas.height - 40) + 20,
+                size: 14,
+                pulse: 0
+            });
+        }
+        
+        // Input Handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+        
+        function handleInput() {
+            player.dx = 0;
+            player.dy = 0;
+            
+            // Keyboard input
+            if (keys['ArrowUp'] || keys['w'] || keys['W'] || mobileInput.up) player.dy = -player.speed;
+            if (keys['ArrowDown'] || keys['s'] || keys['S'] || mobileInput.down) player.dy = player.speed;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A'] || mobileInput.left) player.dx = -player.speed;
+            if (keys['ArrowRight'] || keys['d'] || keys['D'] || mobileInput.right) player.dx = player.speed;
+        }
+        
+        // Update Game
+        function update() {
+            handleInput();
+            
+            // Update Player
+            player.x += player.dx;
+            player.y += player.dy;
+            
+            // Boundary Check
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, player.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, player.y));
+            
+            // Player Trail
+            player.trail.push({x: player.x, y: player.y});
+            if (player.trail.length > 8) player.trail.shift();
+            
+            // Update Firewalls
+            firewalls.forEach(fw => {
+                fw.x += fw.dx;
+                fw.y += fw.dy;
+                
+                if (fw.x <= fw.size/2 || fw.x >= canvas.width - fw.size/2) fw.dx *= -1;
+                if (fw.y <= fw.size/2 || fw.y >= canvas.height - fw.size/2) fw.dy *= -1;
+            });
+            
+            // Update Viruses - TETAP MENGEJAR SEPANJANG WAKTU
+            viruses.forEach(virus => {
+                const dx = player.x - virus.x;
+                const dy = player.y - virus.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                // Virus selalu mengejar pemain dengan kecepatan yang sudah dikurangi
+                if (dist > 0) {
+                    virus.x += (dx / dist) * virus.speed;
+                    virus.y += (dy / dist) * virus.speed;
+                }
+            });
+            
+            // Check Data Bit Collection
+            for (let i = dataBits.length - 1; i >= 0; i--) {
+                const bit = dataBits[i];
+                const dist = Math.sqrt(Math.pow(player.x - bit.x, 2) + Math.pow(player.y - bit.y, 2));
+                
+                if (dist < player.size/2 + bit.size/2 + 5) {
+                    score += 10 * level;
+                    dataBits.splice(i, 1);
+                    spawnParticles(bit.x, bit.y, '#00d4ff');
+                    
+                    if (dataBits.length === 0) {
+                        level++;
+                        initLevel();
+                    }
+                }
+            }
+            
+            // Check Collision
+            firewalls.forEach(fw => {
+                const dist = Math.sqrt(Math.pow(player.x - fw.x, 2) + Math.pow(player.y - fw.y, 2));
+                if (dist < player.size/2 + fw.size/2) {
+                    playerHit();
+                }
+            });
+            
+            viruses.forEach(virus => {
+                const dist = Math.sqrt(Math.pow(player.x - virus.x, 2) + Math.pow(player.y - virus.y, 2));
+                if (dist < player.size/2 + virus.size/2) {
+                    playerHit();
+                }
+            });
+            
+            updateUI();
+        }
+        
+        function playerHit() {
+            lives--;
+            spawnParticles(player.x, player.y, '#ff006e');
+            
+            if (lives > 0) {
+                gameRunning = false;
+                showQuiz();
+            } else {
+                endGame();
+            }
+        }
+        
+        function spawnParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    dx: (Math.random() - 0.5) * 6,
+                    dy: (Math.random() - 0.5) * 6,
+                    life: 25,
+                    color: color
+                });
+            }
+        }
+        
+        // Draw Game
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.08)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw Player Trail
+            player.trail.forEach((pos, i) => {
+                ctx.fillStyle = `rgba(0, 212, 255, ${i * 0.08})`;
+                ctx.fillRect(pos.x - player.size/2, pos.y - player.size/2, player.size, player.size);
+            });
+            
+            // Draw Player
+            ctx.fillStyle = '#fff';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00d4ff';
+            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillRect(player.x - 4, player.y - 4, 8, 8);
+            
+            // Draw Data Bits
+            dataBits.forEach(bit => {
+                bit.pulse += 0.1;
+                const pulseSize = bit.size + Math.sin(bit.pulse) * 2;
+                
+                ctx.fillStyle = '#00d4ff';
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#00d4ff';
+                ctx.beginPath();
+                ctx.arc(bit.x, bit.y, pulseSize/2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 9px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.random() > 0.5 ? '1' : '0', bit.x, bit.y);
+            });
+            
+            // Draw Firewalls
+            firewalls.forEach(fw => {
+                ctx.fillStyle = '#ff006e';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ff006e';
+                ctx.fillRect(fw.x - fw.size/2, fw.y - fw.size/2, fw.size, fw.size);
+                ctx.shadowBlur = 0;
+                
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(fw.x - fw.size/2, fw.y - fw.size/2);
+                ctx.lineTo(fw.x + fw.size/2, fw.y + fw.size/2);
+                ctx.moveTo(fw.x + fw.size/2, fw.y - fw.size/2);
+                ctx.lineTo(fw.x - fw.size/2, fw.y + fw.size/2);
+                ctx.stroke();
+            });
+            
+            // Draw Viruses
+            viruses.forEach(virus => {
+                ctx.fillStyle = '#7b2cbf';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#7b2cbf';
+                
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const r = i % 2 === 0 ? virus.size/2 : virus.size/3;
+                    const x = virus.x + Math.cos(angle) * r;
+                    const y = virus.y + Math.sin(angle) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+            
+            // Draw Particles
+            particles.forEach((p, i) => {
+                p.x += p.dx;
+                p.y += p.dy;
+                p.life--;
+                
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 25;
+                ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+                ctx.globalAlpha = 1;
+                
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('level').textContent = level;
+        }
+        
+        // Quiz System
+        let currentQuestion = null;
+        
+        function showQuiz() {
+            const modal = document.getElementById('quizModal');
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const result = document.getElementById('quizResult');
+            const continueBtn = document.getElementById('continueBtn');
+            
+            result.style.display = 'none';
+            continueBtn.style.display = 'none';
+            
+            currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+            
+            questionText.textContent = currentQuestion.question;
+            
+            optionsContainer.innerHTML = '';
+            currentQuestion.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = String.fromCharCode(65 + idx) + '. ' + opt;
+                
+                // Add all event types
+                btn.addEventListener('pointerdown', function(e) {
+                    e.preventDefault();
+                    checkAnswer(idx, btn);
+                });
+                
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    checkAnswer(idx, btn);
+                }, {passive: false});
+                
+                btn.addEventListener('mousedown', function(e) {
+                    checkAnswer(idx, btn);
+                });
+                
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    checkAnswer(idx, btn);
+                });
+                
+                optionsContainer.appendChild(btn);
+            });
+            
+            modal.style.display = 'flex';
+        }
+        
+        function checkAnswer(selected, btn) {
+            const result = document.getElementById('quizResult');
+            const continueBtn = document.getElementById('continueBtn');
+            const options = document.querySelectorAll('.option-btn');
+            
+            // Prevent multiple checks
+            if (btn.disabled) return;
+            
+            options.forEach(b => {
+                b.disabled = true;
+            });
+            
+            if (selected === currentQuestion.correct) {
+                btn.classList.add('correct');
+                result.textContent = '✅ BENAR! Sistem diperbaiki!';
+                result.style.color = '#00ff64';
+                continueBtn.style.display = 'block';
+            } else {
+                btn.classList.add('wrong');
+                options[currentQuestion.correct].classList.add('correct');
+                result.textContent = '❌ SALAH! Game Over!';
+                result.style.color = '#ff006e';
+                
+                setTimeout(() => {
+                    endGame();
+                }, 2000);
+            }
+            
+            result.style.display = 'block';
+        }
+        
+        function continueGame() {
+            document.getElementById('quizModal').style.display = 'none';
+            resetPlayer();
+            gameRunning = true;
+            gameLoop();
+        }
+        
+        function endGame() {
+            gameRunning = false;
+            document.getElementById('quizModal').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('finalScore').textContent = score;
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('titleScreen').style.display = 'block';
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initBackground();
+                setupButtonListeners();
+            });
+        } else {
+            initBackground();
+            setupButtonListeners();
+        }
+    </script>
+</body>
+</html>
